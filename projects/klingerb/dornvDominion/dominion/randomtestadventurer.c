@@ -28,7 +28,7 @@
 #define TRUE 1
 #define TESTCARD "adventurer"
 #define CARDENUM 7
-#define TESTNUM 1000
+#define TESTNUM 10000
 #define MIN_PLAYERS 2
 #define MAX_CARD_ENUM 26
 #define MIN_CARD_ENUM 0

@@ -1,7 +1,7 @@
-/* Program Filename: randomtestadventurer.c
+/* Program Filename: randomtestcard1.c
  * Author: Barbara Jane Klinger
  * Date: 11/03/2017
- * Description: Automated random test generator for the Adventurer
+ * Description: Automated random test generator for the Smithy
  * 	Dominion Card.  Random test cases are created, which then
  * 	play the action card under test.  The actual game state
  * 	values are then compared with the expected values and
@@ -26,9 +26,10 @@
 // Define constants:
 #define FALSE 0
 #define TRUE 1
-#define TESTCARD "adventurer"
-#define CARDENUM 7
-#define TESTNUM 1000
+#define TESTCARD "smithy"
+#define CARDENUM 13
+#define NEWCARD 3
+#define TESTNUM 10000
 #define MIN_PLAYERS 2
 #define MAX_CARD_ENUM 26
 #define MIN_CARD_ENUM 0
@@ -36,20 +37,20 @@
 // Declare struct:
 struct statusFlags{
 
-	int coinHandAdd;
-	int adHandSub;
-	int coinDeckSub;
-	int adDiscAdd;
-	int trashSame;
+	int newHandAdd;
+	int smiHandSub;
+	int smiDiscAdd;
+	int newDeckSub;
 	int oppHandSame;
 	int oppDeckSame;
 	int oppDiscSame;
+	int trashSame;
 	int pilesSame;
 };
 
 // Function prototypes:
 int assertTrue(int);
-void compareGameStates(struct gameState *, struct gameState *, struct statusFlags *, int);
+void compareGameStates(struct gameState *, struct gameState *, struct statusFlags *, int, int);
 int handContains(struct gameState *, int, int);
 int deckContains(struct gameState *, int, int);
 int discardContains(struct gameState *, int, int);
@@ -123,15 +124,15 @@ int main(){
 
 		Game.hand[player][handPos] = CARDENUM;
 
-		// Copy game instance to test case:
+		// Copy game instancce to test case:
 		memcpy(&TestGame, &Game, sizeof(struct gameState));
 
 		// Test case plays the card under test:
 		cardEffect(CARDENUM, FALSE, FALSE, FALSE, &TestGame, handPos, &bonus);
-		
+
 		// Initialize status flags and compare actual and expected game state conditions:
 		initializeFlags(&State);
-		compareGameStates(&Game, &TestGame, &State, player);
+		compareGameStates(&Game, &TestGame, &State, player, handPos);
 
 		// Record statistic:
 		printFail = recordStats(&State, &Total);
@@ -139,15 +140,14 @@ int main(){
 		// If a test failed, print out the stats of the failed test:
 		if(printFail){
 
-			printf("\nTEST CASE FAILED!!: Total players: %d; player number: %d; hand position: %d; ", 
+			printf("\nTEST CASE FAILED!!: Total players: %d; player num: %d; hand pos: %d; ", 
 				playerNumber, player, handPos);
-			printf("Hand: %d; Deck: %d; Discard: %d\n", Game.handCount[player],
+			printf("Hand: %d; Deck: %d; Discard: %d\n", Game.handCount[player], 
 				Game.deckCount[player], Game.discardCount[player]);
-			printf("Flags: CH+: %d; AH-: %d; CD-: %d; AD+: %d; ", State.coinHandAdd, 
-				State.adHandSub, State.coinDeckSub, State.adDiscAdd);
-			printf("T=: %d, OH=: %d; ODe=: %d; ODi=: %d: ", State.trashSame, 
-				State.oppHandSame, State.oppDeckSame, State.oppDiscSame);
-			printf("P=: %d\n", State.pilesSame); 
+			printf("Flags: NH+: %d; SH-: %d; SDi+: %d; NDe-: %d; ", State.newHandAdd, 
+				State.smiHandSub, State.smiDiscAdd, State.newDeckSub);
+			printf("OH=: %d, ODe=: %d; ODi=: %d; T=: %d; P=: %d;\n", State.oppHandSame, 
+				State.oppDeckSame, State.oppDiscSame, State.trashSame, State.pilesSame);
 		}
 	}
 
@@ -155,127 +155,104 @@ int main(){
 	printf("\n*** %s card total tests: %d\n", TESTCARD, 
 		TESTNUM); 
 	printf("*** Condition Statistics:\n");
-	printf("Player hand gains treasure cards(CH+): %d failed tests\n", Total.coinHandAdd);
-	printf("Player hand removes adventurer card(AH-): %d failed tests\n", Total.adHandSub);
-	printf("Treasure cards taken from player deck(CD-): %d failed tests\n", Total.coinDeckSub);
-	printf("Adventurer card added to discard(AD+): %d failed tests\n", Total.adDiscAdd);
+	printf("Three new cards added to player hand(NH+): %d failed tests\n", Total.newHandAdd);
+	printf("Smithy removed from player hand(SH-): %d failed tests\n", Total.smiHandSub);
+	printf("Smithy added to player discard(SDi+): %d failed tests\n", Total.smiDiscAdd);
+	printf("Three cards removed from player deck(NDe-): %d failed tests\n", Total.newDeckSub);
+	printf("No changes to opponents hand(OH=): %d failed tests\n", Total.oppHandSame);
+	printf("No changes to opponents deck(ODe=): %d failed tests\n", Total.oppDeckSame);
+	printf("No changes to oppponents discard(ODi=): %d failed tests\n", Total.oppDiscSame);
 	printf("No cards are trashed(T=): %d failed tests\n", Total.trashSame);
-	printf("No opponent hand cards changed(OH=): %d failed tests\n", Total.oppHandSame);
-	printf("No opponent deck cards changed(ODe=): %d failed tests\n", Total.oppDeckSame);
-	printf("No opponent discard cards changed(ODi=): %d failed tests\n", Total.oppDiscSame);
 	printf("No kingdom or victory card piles changed(P=): %d failed tests\n\n", Total.pilesSame);
 		
 	return 0;
 }
 
 void compareGameStates(struct gameState *Game, struct gameState *TestGame, 
-	struct statusFlags *State, int player){
+	struct statusFlags *State, int player, int handPos){
 
 	// Declare local variables:
 	int actualNumber, expectedNumber, index;
 
-	// Player hand gains two treasure cards:
-	actualNumber = handContains(TestGame, player, copper) 
-		+ handContains(TestGame, player, silver)
-		+ handContains(TestGame, player, gold);
-	expectedNumber = handContains(Game, player, copper) 
-		+ handContains(Game, player, silver) +
-		+ handContains(Game, player, gold) + 2;
-	
-	if(actualNumber != expectedNumber){
+	// Execute loop to determine opponent game state conditions:
+	for(index = 0; index < Game->numPlayers; index++){
 
-		// If treasure cards not added to hand, check to see if there are
-		// any in the deck or discard that should have been added:
-		actualNumber = deckContains(TestGame, player, copper)
-			+ deckContains(TestGame, player, silver) 
-			+ deckContains(TestGame, player, gold)
-			+ discardContains(TestGame, player, copper)
-			+ discardContains(TestGame, player, silver)
-			+ discardContains(TestGame, player, gold);
-		State->coinHandAdd = assertTrue(actualNumber == 0);
+		if(index != player){
+		
+			// No changes to opponent hands:
+			actualNumber = TestGame->handCount[index];
+			expectedNumber = Game->handCount[index];
+			State->oppHandSame = assertTrue(actualNumber == expectedNumber);
+
+			// No changes to opponent decks:
+			actualNumber = TestGame->deckCount[index];
+			expectedNumber = Game->deckCount[index];
+			State->oppDeckSame = assertTrue(actualNumber == expectedNumber);
+
+			// There should be no changes to the opponent discard:
+			actualNumber = TestGame->discardCount[index];
+			expectedNumber = Game->discardCount[index];
+			State->oppDiscSame = assertTrue(actualNumber == expectedNumber);
+		}
 	}
 
-	// Player hand removes adventurer card:
-	actualNumber = handContains(TestGame, player, adventurer);
-	expectedNumber = handContains(Game, player, adventurer) - 1;
-	State->adHandSub = assertTrue(actualNumber == expectedNumber); 
-	
-	// Treasure cards removed from player's deck (and discard if shuffle):
-	actualNumber = deckContains(TestGame, player, copper)
-		+ deckContains(TestGame, player, silver) 
-		+ deckContains(TestGame, player, gold)
-		+ discardContains(TestGame, player, copper)
-		+ discardContains(TestGame, player, silver)
-		+ discardContains(TestGame, player, gold);
-	expectedNumber = deckContains(Game, player, copper)
-		+ deckContains(Game, player, silver) 
-		+ deckContains(Game, player, gold)
-		+ discardContains(Game, player, copper)
-		+ discardContains(Game, player, silver)
-		+ discardContains(Game, player, gold) - 2;
+	// Player hand removes smithy card:
+	actualNumber = TestGame->hand[player][handPos];
+	expectedNumber = Game->hand[player][handPos];
+	State->smiHandSub = assertTrue(actualNumber != expectedNumber);
 
-	State->coinDeckSub = assertTrue(actualNumber == expectedNumber);		
+	// Player hand gains three new cards for a net gain 
+	// of two (supposed to lose smithy card)
+	actualNumber = handContains(TestGame, player, CARDENUM);
+	expectedNumber = handContains(Game, player, CARDENUM) + NEWCARD - 1;
+	State->newHandAdd = assertTrue(actualNumber == expectedNumber); 		
 	
-	// Adventurer card is added to discard pile:
-	actualNumber = deckContains(TestGame, player, adventurer) 
-		+ discardContains(TestGame, player, adventurer);
-	expectedNumber = deckContains(Game, player, adventurer)
-		+ discardContains(TestGame, player, adventurer) + 1;
-	State->adDiscAdd = assertTrue(actualNumber == expectedNumber);
+	// Player deck (and/or discard with shuffle) removes three cards:
+	// For a net loss of two(supposed to gain Smithy card):
+	actualNumber = TestGame->discardCount[player] + TestGame->deckCount[player];
+	expectedNumber = Game->discardCount[player] + Game->deckCount[player] - NEWCARD + 1;
+	State->newDeckSub = assertTrue(actualNumber == expectedNumber);
+
+	// Smithy card is added to discard pile:
+	actualNumber = discardContains(TestGame, player, CARDENUM) 
+		+ deckContains(TestGame, player, CARDENUM);
+	expectedNumber = discardContains(Game, player, CARDENUM) 
+		+ deckContains(Game, player, CARDENUM) + 1;
+	State->smiDiscAdd = assertTrue(actualNumber == expectedNumber);
 	
-	// No cards trashed by either player:
+	// No cards trashed by any player:
 	actualNumber = TestGame->playedCardCount;
 	expectedNumber = Game->playedCardCount;
 	State->trashSame = assertTrue(actualNumber == expectedNumber);
 	
-	// No changes to other player's hand/deck/discard piles
-	for(index = 0; index < Game->numPlayers; index++){
-	
-		if(index != player){
-			// Compare actual and expected hand values:
-			State->oppHandSame = assertTrue(TestGame->handCount[index] == Game->handCount[index]);
-
-			// Compare actual and expected deck values:
-			State->oppDeckSame = assertTrue(TestGame->deckCount[index] == Game->deckCount[index]);
-		
-			// Compare acutal and expected discard values:
-			State->oppDiscSame = assertTrue(TestGame->discardCount[index] 
-				== Game->discardCount[index]);
-		}
-	} 
-	
-	// No changes to kingdom or victory piles:
+	// No changes to other kingdom or victory piles:
 	for(index = 0; index < treasure_map + 1; index++){
 
-		State->pilesSame = assertTrue(TestGame->supplyCount[index] = Game->supplyCount[index]);
+		State->pilesSame = assertTrue(TestGame->supplyCount[index] 
+			== Game->supplyCount[index]);
 	}
-	
 }
 
 int recordStats(struct statusFlags *State, struct statusFlags *Total){
 
 	// Declare local variables:
 	int testFailed = FALSE;
-	
+
 	// Record statistics:
-	if(State->coinHandAdd == FALSE){
-		Total->coinHandAdd++;
+	if(State->newHandAdd == FALSE){
+		Total->newHandAdd++;
 		testFailed = TRUE;
 	}
-	if(State->adHandSub == FALSE){
-		Total->adHandSub++;
+	if(State->smiHandSub == FALSE){
+		Total->smiHandSub++;
 		testFailed = TRUE;
 	}
-	if(State->coinDeckSub == FALSE){
-		Total->coinDeckSub++;
+	if(State->smiDiscAdd == FALSE){
+		Total->smiDiscAdd++;
 		testFailed = TRUE;
 	}
-	if(State->adDiscAdd == FALSE){
-		Total->adDiscAdd++;
-		testFailed = TRUE;
-	}
-	if(State->trashSame == FALSE){
-		Total->trashSame++;
+	if(State->newDeckSub == FALSE){
+		Total->newDeckSub++;
 		testFailed = TRUE;
 	}
 	if(State->oppHandSame == FALSE){
@@ -290,6 +267,10 @@ int recordStats(struct statusFlags *State, struct statusFlags *Total){
 		Total->oppDiscSame++;
 		testFailed = TRUE;
 	}
+	if(State->trashSame == FALSE){
+		Total->trashSame++;
+		testFailed = TRUE;
+	}
 	if(State->pilesSame == FALSE){
 		Total->pilesSame++;
 		testFailed = TRUE;
@@ -300,27 +281,27 @@ int recordStats(struct statusFlags *State, struct statusFlags *Total){
 
 void initializeFlags(struct statusFlags *State){
 
-	State->coinHandAdd = TRUE;
-	State->adHandSub= TRUE;
-	State->coinDeckSub = TRUE;
-	State->adDiscAdd = TRUE;
-	State->trashSame = TRUE;
+	State->newHandAdd = TRUE;
+	State->smiHandSub = TRUE;
+	State->smiDiscAdd = TRUE;
+	State->newDeckSub = TRUE;
 	State->oppHandSame = TRUE;
 	State->oppDeckSame = TRUE;
 	State->oppDiscSame = TRUE;
+	State->trashSame = TRUE;
 	State->pilesSame = TRUE;
 }
 
 void initializeCounters(struct statusFlags *State){
 
-	State->coinHandAdd = 0;
-	State->adHandSub= 0;
-	State->coinDeckSub = 0;
-	State->adDiscAdd = 0;
-	State->trashSame = 0;
+	State->newHandAdd = 0;
+	State->smiHandSub = 0;
+	State->smiDiscAdd = 0;
+	State->newDeckSub = 0;
 	State->oppHandSame = 0;
 	State->oppDeckSame = 0;
 	State->oppDiscSame = 0;
+	State->trashSame = 0;
 	State->pilesSame = 0;
 }
 

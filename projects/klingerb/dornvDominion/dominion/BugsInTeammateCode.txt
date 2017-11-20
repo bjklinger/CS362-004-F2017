@@ -1,0 +1,178 @@
+===================================================================================================
+
+Title: Game Play does not terminate when three Non-Province Piles are empty
+
+Class: Incorrect Game State
+
+Date: 11/16/2017
+Reported By: Barbara Jane Klinger
+Email: klingerb@oregonstate.edu
+
+Product: Dominion C Code
+Platform: Flip3 Engineering Server
+
+Is it reproducable: Yes
+
+Description
+===========
+When three non-province piles are emptied from the boundaries of the supplyCard
+array the isGameOver function returns 0 indicating that game play should continue.
+
+Steps to Produce/Reproduce
+--------------------------
+1. Generate an instance of the gameState struct
+2. Initialize a game with two players and a random seed of 10
+3. For the instance of the the gameState struct:
+   - Set the number of curse cards in the supplyCard array (element 0) to zero
+   - Set the number of smithy cards in the supplyCard array (element 13) to zero
+   - Set the number of treasure map cards in the supplyCard array (element 26) to zero
+4. Call the isGameOver function using the instance of the gameState struct
+
+Expected Results
+----------------
+The isGameOver function should return 1 indicating that the game is over.
+
+Actual Results
+--------------
+The isGameOver function returns 0 indicating that game play should continue.
+
+Workarounds
+-----------
+Treasure Map and Sea Hag cards are not used in gameplay.
+
+Attachments
+-----------
+Code snippets and test output included in Assignment-5.pdf submission
+
+Other Information
+-----------------
+N/A
+
+===================================================================================================
+
+Title: Smithy Card is Not Being Added to Discard Array
+
+Class: Significant Impact on Game play
+
+Date: 11/17/2017
+Reported By: Barbara Jane Klinger
+Email: klingerb@oregonstate.edu
+
+Product: Dominion C Code
+Platform: Flip3 Engineering Server
+
+Is it reproducible: Yes
+
+Description
+==========
+Upon being "played" the Smithy card is correctly being removed from the player hand array,
+but it is not being added to the player discard array.  When this particular test condition
+is run, the array containing the trashed cards does not remain unmodified, indicating that
+the discardCard function and how it handles this card may be the root cause of this bug. 
+As a result of this error potentially exisiting in the discardCard function as opposed to 
+being contained in just the Smithy card function, it could have a significant impact on
+game play when any card is discarded. 
+
+Steps to Produce/Reproduce
+--------------------------
+1. Generate an instance of the gameState struct
+2. Initialize a game with any number of players from 2 to 4 and any random seed.
+3. Add a smithy card to the player hand array in any random valid element
+4. Call the cardEffect function using the instance of the gameState struct with the
+   following parameters:
+	- card = 7
+	- choice1 = 0
+	- choice2 = 0
+	- choice3 = 0
+	- state = instance of game state struct passed by reference
+	- handPos = the chosen element of the smithy card in the player hand
+	- bonus = dummy int variable initialized to zero and passed by reference
+
+Expected Results
+----------------
+Upon completing of the card action, the smithy card is removed from the player hand array
+and added to the player discard array.
+
+Actual Results
+--------------
+Upon completion of the card action, the smithy card is removed from the player hand array
+but it is not added to the player discard array.
+
+Workarounds
+-----------
+None.
+
+Attachments
+-----------
+Code snippets and test output included in Assignment-5.pdf submission
+
+Other Information
+-----------------
+N/A
+
+===================================================================================================
+
+Title: Sea Hag Card Action causing the loss of Opponent Deck Cards
+
+Class: Incorrect Game State
+
+Date: 11/17/2017
+Reported By: Barbara Jane Klinger
+Email: klingerb@oregonstate.edu
+
+Product: Dominion C Code
+Platform: Flip3 Engineering Server
+
+Is it reproducible: Yes
+
+Description
+==========
+Upon being "played" the Sea Hag card is causing the opponent's deck arrays to "lose" three cards.  
+In correct game play, the Sea Hag card causes the top deck card to be added to the discard pile
+and to be replaced by a curse card.  Since the opponent's discard array is correctly gaining one
+card, it appears that three deck cards (possibly including the newly added curse card) are
+disappearing from play.
+
+Steps to Produce/Reproduce
+--------------------------
+1. Generate an instance of the gameState struct
+2. Initialize a game with any number of players from 2 to 4 and any random seed.
+3. Add a sea hag card to the player hand array in any random valid element
+4. Call the cardEffect function using the instance of the gameState struct with the
+   following parameters:
+	- card = 25
+	- choice1 = 0
+	- choice2 = 0
+	- choice3 = 0
+	- state = instance of game state struct passed by reference
+	- handPos = the chosen element of the smithy card in the player hand
+	- bonus = dummy int variable initialized to zero
+
+Expected Results
+----------------
+Upon completion of the card action, the top card of each opponent deck is placed in the 
+respective player's discard array and is replaced by a curse card.  The deck should 
+have a net gain of zero cards. 
+
+Actual Results
+--------------
+Upon completion of the card action, the top card of each opponent deck is placed in 
+the respective player's discard array, but three additional cards (potentially including
+the newly added curse card) are disappearing from the opponent deck for a net loss of
+three cards. 
+
+Workarounds
+-----------
+None.
+
+Attachments
+-----------
+Code snippets and test output included in Assignment-5.pdf submission
+
+Other Information
+-----------------
+N/A
+
+===================================================================================================
+
+

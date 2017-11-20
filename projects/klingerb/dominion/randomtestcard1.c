@@ -29,7 +29,7 @@
 #define TESTCARD "smithy"
 #define CARDENUM 13
 #define NEWCARD 3
-#define TESTNUM 100000
+#define TESTNUM 1000
 #define MIN_PLAYERS 2
 #define MAX_CARD_ENUM 26
 #define MIN_CARD_ENUM 0

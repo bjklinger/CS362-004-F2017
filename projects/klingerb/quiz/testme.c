@@ -27,7 +27,7 @@ char *inputString()
 	blah[index] = random;
     }
 
-    blah[STRING_SIZE] = '\0';
+    blah[STRING_SIZE - 1] = '\0';
 
     return blah;
 }
